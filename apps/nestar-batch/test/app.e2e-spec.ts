@@ -1,7 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
-import * as request from 'supertest';
+import request from 'supertest';
 import { NestarBatchModule } from './../src/nestar-batch.module';
+import { beforeEach } from 'node:test';
 
 describe('NestarBatchController (e2e)', () => {
   let app: INestApplication;
