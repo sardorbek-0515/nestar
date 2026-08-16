@@ -7,8 +7,8 @@ import { ApolloDriver } from '@nestjs/apollo';
 import { AppResolver } from './app.resolver';
 import { ComponentsModule } from './components/components.module';
 import { DatabaseModule } from './database/database.module';
-import { AuthModule } from './conponents/auth/auth.module';
-import { CommentModule } from './conponents/comment/comment.module';
+import { AuthModule } from './components/auth/auth.module';
+import { CommentModule } from './components/comment/comment.module';
 
 @Module({
 	imports: [
