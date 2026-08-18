@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
-// import { LoggingInterceptor } from './libs/interceptor/Logging.interceptor';
+import { LoggingInterceptor } from './libs/interceptor/Login.interceptor';
 
 // define
 async function bootstrap() {
