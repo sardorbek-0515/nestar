@@ -7,6 +7,7 @@ export enum Message {
 	UPLOAD_FAILED = 'Upload failed!',
 	BAD_REQUEST = 'Bad Request!',
 
+	USED_MEMBER_NICK_OR_PHONE = 'Already used member nick or phone!',
 	NO_MEMBER_NICK = 'No member with that member nick!',
 	BLOCKED_USER = 'You have been blocked!',
 	WRONG_PASSWORD = 'Wrong password, try again!',
@@ -16,5 +17,4 @@ export enum Message {
 	NOT_ALLOWED_REQUEST = 'Not Allowed Request!',
 	PROVIDE_ALLOWED_FORMAT = 'Please provide jpg, jpeg or png image!',
 	SELF_SUBSCRIPTION_DENIED = 'Self subscription is deniedd!',
-  USED_MEMBER_NICK_OR_PHONE = "USED_MEMBER_NICK_OR_PHONE",
 }
