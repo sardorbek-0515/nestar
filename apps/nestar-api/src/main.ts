@@ -7,6 +7,7 @@ import { LoggingInterceptor } from './libs/interceptor/Login.interceptor';
 async function bootstrap() {
 	const app = await NestFactory.create(AppModule);
 	app.useGlobalPipes(new ValidationPipe());
+	app.useGlobalInterceptors(new LoggingInterceptor());
 	await app.listen(process.env.PORT_API ?? 3000);
 }
 
