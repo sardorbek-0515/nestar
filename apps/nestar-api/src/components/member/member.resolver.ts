@@ -9,6 +9,7 @@ import { ObjectId } from 'mongoose';
 import { MemberType } from '../../libs/enums/member.enum';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { MemberUpdate } from '../../libs/dto/member/member.update';
 
 @Resolver()
 export class MemberResolver {
@@ -29,17 +30,6 @@ export class MemberResolver {
 	}
 
 
-    // Authenticated bolgan userlar kra oladi updateMemberga (user.admin.agent)
-	/** --------------------------- updateMember --------------------------- **/
-	@UseGuards(AuthGuard)
-	@Mutation(() => String) // @Mutation(POST)
-	public async updateMember(@AuthMember ('_id')  memberId: ObjectId): Promise<string> {
-		console.log('Mutation: updateMember');
-		// console.log(typeof memberId);
-		// console.log(memberId);
-		return this.memberService.updateMember();
-	}
-
 	@UseGuards(AuthGuard)
 	@Query(() => String) // @Mutation(POST)
 	public async checkAuth(@AuthMember('memberNick') memberNick: string): Promise<string> {
@@ -55,6 +45,21 @@ export class MemberResolver {
 		console.log('Query: checkAuthRoles');
 
 		return `Hi ${authMember.memberNick},you are ${authMember.memberType} (memerId: ${authMember._id})`;
+	}
+
+
+    // Authenticated bolgan userlar kra oladi updateMemberga (user.admin.agent)
+	/** --------------------------- updateMember --------------------------- **/
+	@UseGuards(AuthGuard)
+	@Mutation(() => Member) // @Mutation(POST)
+	public async updateMember(
+		@Args('input') input: MemberUpdate,
+		@AuthMember ('_id')  memberId: ObjectId
+	): Promise<Member> {
+		console.log('Mutation: updateMember');
+		// console.log(typeof memberId);
+        delete input._id; // _id ni inputdan o'chirib tashlaymiz, chunki u update qilinmaydi
+		return this.memberService.updateMember(memberId, input);
 	}
 
 	/** --------------------------- getMember --------------------------- **/
