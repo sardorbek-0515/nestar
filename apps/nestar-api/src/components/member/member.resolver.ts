@@ -6,6 +6,9 @@ import { Member } from '../../libs/dto/member/member';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { AuthMember } from '../auth/decorators/authMember.decorator';
 import { ObjectId } from 'mongoose';
+import { MemberType } from '../../libs/enums/member.enum';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
 
 @Resolver()
 export class MemberResolver {
@@ -36,13 +39,6 @@ export class MemberResolver {
 		// console.log(memberId);
 		return this.memberService.updateMember();
 	}
- 
-	/** --------------------------- getMember --------------------------- **/
-	@Query(() => String) // @Query (GET)
-	public async getMember(): Promise<string> {
-		console.log('Query: getMember');
-		return this.memberService.getMember();
-	}
 
 	@UseGuards(AuthGuard)
 	@Query(() => String) // @Mutation(POST)
@@ -52,19 +48,37 @@ export class MemberResolver {
 		console.log(memberNick);
 		return `Hi ${memberNick}`;
 	}
+	@Roles(MemberType.USER, MemberType.AGENT)
+	@UseGuards(AuthGuard)
+	@Query(() => String) // @Mutation(POST)
+	public async checkAuthRoles(@AuthMember() authMember: Member): Promise<string> {
+		console.log('Query: checkAuthRoles');
 
-	/** --------------------------- getAllMembers --------------------------- **/ 
-	// Authhorization: ADMIN faqat
-	@Mutation(() => String)
-	public async getAllMembers(): Promise<string> {
-		console.log('Mutation: getAllMembers');
-		return this.memberService.getAllMembers();
+		return `Hi ${authMember.memberNick},you are ${authMember.memberType} (memerId: ${authMember._id})`;
 	}
-    
-	// Authhorization: ADMIN faqat
+
+	/** --------------------------- getMember --------------------------- **/
+	@Query(() => String) // @Query (GET)
+	public async getMember(): Promise<string> {
+		console.log('Query: getMember');
+		return this.memberService.getMember();
+	}
+
+	/** --------------------------- getAllMembersByAdmin --------------------------- **/
+	/** =============== ADMIN ============= **/
+	// Authorization: ADMIN
+	@Roles(MemberType.ADMIN)
+	@UseGuards(RolesGuard)
 	@Mutation(() => String)
-	public async updateMemberByAdmin(): Promise<string> {
-		console.log('Mutation: updateMemberByAdmin');
-		return this.memberService.updateMember();
+	public async getAllMembersByAdmin(): Promise<string> {
+		return this.memberService.getAllMembersByAdmin();
+	}
+
+	/** --------------------------- updateMemberByADmin --------------------------- **/
+	// Authorization: ADMIN
+	@Mutation(() => String) // @Mutation(POST)
+	public async updateMemberByADmin(): Promise<string> {
+		console.log('updateMemberByADmin: updateMemberByADmin');
+		return this.memberService.updateMemberByADmin();
 	}
 }

@@ -10,22 +10,23 @@ import { AuthService } from '../auth/auth.service';
 @Injectable()
 export class MemberService {
 	/** --------------------------- mongoose --------------------------- **/
-	constructor
-	 (@InjectModel('Member') private readonly memberModel: Model<Member>, 
-	 private authService: AuthService,
-    ) {} 
-
-
+	constructor(
+		@InjectModel('Member') private readonly memberModel: Model<Member>,
+		private authService: AuthService,
+	) {}
 	/** --------------------------- signup --------------------------- **/
 	public async signup(input: MemberInput): Promise<Member> {
 		// TODO: Hash password
 		input.memberPassword = await this.authService.hashPassword(input.memberPassword);
+
 		try {
-		  const result = await this.memberModel.create(input);
-          result.accessToken = await this.authService.createToken(result);
+			const result = await this.memberModel.create(input);
+			// TODO: Authentication via TOKEN
+			result.accessToken = await this.authService.createToken(result);
+
 			return result;
 		} catch (err) {
-		  console.log('Error, Service.model:', err.message);
+			console.log('Error, Service.model:', err);
 			throw new BadRequestException(Message.USED_MEMBER_NICK_OR_PHONE);
 		}
 	}
@@ -36,7 +37,7 @@ export class MemberService {
 		const response: Member = await this.memberModel
 			.findOne({ memberNick: memberNick })
 			.select('+memberPassword')
-			.exec(    );
+			.exec();
 
 		if (!response || response.memberStatus === MemberStatus.DELETE) {
 			throw new InternalServerErrorException(Message.NO_MEMBER_NICK);
@@ -63,13 +64,13 @@ export class MemberService {
 		return 'getMember executed';
 	}
 
-	/** --------------------------- updateMember --------------------------- **/
-	public async getAllMembers(): Promise<string> {
-		return 'getAllMembers executed';
+	/** --------------------------- getAllMembersByAdmin --------------------------- **/
+	public async getAllMembersByAdmin(): Promise<string> {
+		return 'getAllMembersByAdmin getAllMembersByAdmin';
 	}
 
-	/** --------------------------- getMember --------------------------- **/
-	public async updateMemberByAdmin(): Promise<string> {
-		return 'updateMemberByAdmin executed';
+	/** --------------------------- updateMemberByADmin --------------------------- **/
+	public async updateMemberByADmin(): Promise<string> {
+		return 'updateMemberByADmin executed';
 	}
 }
