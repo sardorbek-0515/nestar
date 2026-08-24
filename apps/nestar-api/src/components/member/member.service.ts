@@ -21,11 +21,11 @@ export class MemberService {
 		// TODO: Hash password
 		input.memberPassword = await this.authService.hashPassword(input.memberPassword);
 		try {
-			const result = await this.memberModel.create(input);
-			// TODO: Authentication via TOKEN
+		  const result = await this.memberModel.create(input);
+          result.accessToken = await this.authService.createToken(result);
 			return result;
 		} catch (err) {
-		  console.log('Error, Service.model:', err.message​​);
+		  console.log('Error, Service.model:', err.message);
 			throw new BadRequestException(Message.USED_MEMBER_NICK_OR_PHONE);
 		}
 	}
@@ -45,9 +45,10 @@ export class MemberService {
 		}
 
 		// TODO: Compare passwords
-		// console.log('response:', response);
+		console.log('response:', response);
 		const isMatch = await this.authService.comparePassword(input.memberPassword, response.memberPassword);
 		if (!isMatch) throw new InternalServerErrorException(Message.WRONG_PASSWORD);
+		response.accessToken = await this.authService.createToken(response);
 
 		return response;
 	}
