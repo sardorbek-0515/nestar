@@ -7,22 +7,19 @@ import { T } from '../../libs/types/common';
 
 @Injectable()
 export class ViewService {
-    constructor(@InjectModel("View") private readonly viewModel: Model<View>) {}
+	constructor(@InjectModel('View') private readonly viewModel: Model<View>) {}
 
-    public async recordView(input: ViewInput): Promise<View | null> {
-        const viewExistence = await this.checkIfViewExistence(input);
-        if (viewExistence) {
-            console.log("- New View Insert- ");
-            return await this.viewModel.create(input);
-            
-        }else  return null;
-       }
+	public async recordView(input: ViewInput): Promise<View | null> {
+		const viewExist = await this.checkViewExistence(input);
+		if (!viewExist) {
+			console.log('- New View Insert -');
+			return await this.viewModel.create(input);
+		} else return null;
+	}
 
-    private async checkIfViewExistence(input: ViewInput): Promise<View>{
-        const { memberId, viewRefId } = input;
-        const search: T = { memberId: memberId, viewRefId: viewRefId };
-        return await this.viewModel.findOne(search).exec();
-
-    }
+	private async checkViewExistence(input: ViewInput): Promise<View> {
+		const { memberId, viewRefId } = input;
+		const search: T = { memberId: memberId, viewRefId: viewRefId };
+		return await this.viewModel.findOne(search).exec();
+	}
 }
- 

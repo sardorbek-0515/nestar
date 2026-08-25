@@ -34,10 +34,10 @@ export class Member {
 	memberAddress?: string;
 
 	@Field(() => String, { nullable: true })
-	MemberDesc?: string;
+	memberDesc?: string;
 
 	@Field(() => Int)
-	MemberProperties: number;
+	memberProperties: number;
 
 	@Field(() => Int)
 	memberArticles: number;
@@ -80,4 +80,22 @@ export class Member {
 
 	@Field(() => String, { nullable: true })
 	accessToken?: string;
+}
+
+
+@ObjectType()
+export class TotalCounter {
+	@Field(() => Int, {nullable: true})
+	total: number;
+}
+
+
+@ObjectType()
+export class Members {
+	@Field(() => [Member])
+	list: Member[];
+
+	@Field(() => [TotalCounter], { nullable: true})
+	metaCounter: TotalCounter[];
+
 }

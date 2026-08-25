@@ -1,8 +1,8 @@
 import { Mutation, Resolver, Query, Args } from '@nestjs/graphql';
 import { MemberService } from './member.service';
 import { InternalServerErrorException, UseGuards } from '@nestjs/common';
-import { LoginInput, MemberInput } from '../../libs/dto/member/member.input';
-import { Member } from '../../libs/dto/member/member';
+import { AgentsInquiry, LoginInput, MemberInput } from '../../libs/dto/member/member.input';
+import { Member, Members } from '../../libs/dto/member/member';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { AuthMember } from '../auth/decorators/authMember.decorator';
 import { ObjectId } from 'mongoose';
@@ -32,7 +32,7 @@ export class MemberResolver {
 	}
 
 
-	@UseGuards(AuthGuard)
+	@UseGuards(AuthGuard)   //Authentication 
 	@Query(() => String) // @Mutation(POST)
 	public async checkAuth(@AuthMember('memberNick') memberNick: string): Promise<string> {
 		console.log('Query: checkAuth');
@@ -40,8 +40,10 @@ export class MemberResolver {
 		console.log(memberNick);
 		return `Hi ${memberNick}`;
 	}
-	@Roles(MemberType.USER, MemberType.AGENT)
-	@UseGuards(AuthGuard)
+
+
+	@Roles(MemberType.USER, MemberType.AGENT) 	// Authorization:
+	@UseGuards(RolesGuard)
 	@Query(() => String) // @Mutation(POST)
 	public async checkAuthRoles(@AuthMember() authMember: Member): Promise<string> {
 		console.log('Query: checkAuthRoles');
@@ -66,7 +68,7 @@ export class MemberResolver {
 
 	/** --------------------------- getMember --------------------------- **/
 	@UseGuards(WithoutGuard)
-	@Query(() => Member) // @Query (GET)
+	@Query(() => Members) // @Query (GET)
 	public async getMember(@Args("memberId") input: string, @AuthMember('_id') memberId: ObjectId): Promise<Member> {
 		console.log('Query: getMember');
 		console.log('memberId:', memberId);
@@ -74,8 +76,20 @@ export class MemberResolver {
 		return this.memberService.getMember(memberId, targetId);
 	}
 
+	 /** --------------------------- getAgents --------------------------- **/
+    @UseGuards(WithoutGuard)
+	@Query(() => Members) // @Query (GET)
+	public async getAgents(@Args('input') input: AgentsInquiry, @AuthMember('_id') memberId: ObjectId): Promise<Members> {
+		console.log('Query: getAgents');  
+		return this.memberService.getAgents(memberId, input);
+	}
+
+
+
+
+                   /** =============== ADMIN ============= **/ 
 	/** --------------------------- getAllMembersByAdmin --------------------------- **/
-	/** =============== ADMIN ============= **/
+
 	// Authorization: ADMIN
 	@Roles(MemberType.ADMIN)
 	@UseGuards(RolesGuard)

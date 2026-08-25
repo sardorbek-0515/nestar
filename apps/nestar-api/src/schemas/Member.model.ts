@@ -43,10 +43,10 @@ const MemberSchema = new Schema(
 		memberAddress: {
 			type: String,
 		},
-		MemberDesc: {
+		memberDesc: {
 			type: String,
 		},
-		MemberProperties: {
+		memberProperties: {
 			type: Number,
 			default: 0,
 		},
