@@ -47,7 +47,7 @@ export class MemberUpdate { // DTO (Data Transfer Object) for member input
 
     @IsOptional()
     @Field(() => String, { nullable: true })
-    memberDics?: string;
+    memberDisc?: string;
 
     deleteAt?: Date;
 }
