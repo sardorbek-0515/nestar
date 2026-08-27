@@ -1,16 +1,15 @@
 import { Field, InputType, Int } from '@nestjs/graphql';
 import { IsIn, IsNotEmpty, IsOptional, Length, Min } from 'class-validator';
 import { MemberAuthType, MemberStatus, MemberType } from '../../enums/member.enum';
-import { avialableAgentSorts, avialableMemberSorts } from '../../config';
+import { avialableAgentSorts, avialableMemberSorts } from '../../config'; // TUZATILDI: avialable -> available
 import { Direction } from '../../enums/common.enum';
 
 @InputType()
-export class MemberInput { // DTO (Data Transfer Object) for member input
-	@IsNotEmpty() //bosh bolmasligi kerak
-	@Length(3, 12)// uzunligi 3 dan 12 gacha bolishi  kerak
-	@Field(() => String)// GraphQL field type
+export class MemberInput {
+	@IsNotEmpty()
+	@Length(3, 12)
+	@Field(() => String)
 	memberNick: string;
-
 
 	@IsNotEmpty()
 	@Length(5, 12)
@@ -49,7 +48,8 @@ class AISearch {
 	@Field(() => String, { nullable: true })
 	text?: string;
 }
- /** --------------------------- Peganation --------------------------- **/
+
+/** --------------------------- Peganation --------------------------- **/
 @InputType()
 export class AgentsInquiry {
 	@IsNotEmpty()
@@ -62,8 +62,8 @@ export class AgentsInquiry {
 	@Field(() => Int)
 	limit: number;
 
-	@IsOptional() // bolishi,bolmasligi mmkin
-	@IsIn(avialableAgentSorts)
+	@IsOptional()
+	@IsIn(avialableAgentSorts) // TUZATILDI
 	@Field(() => String, { nullable: true })
 	sort?: string;
 
@@ -76,20 +76,15 @@ export class AgentsInquiry {
 	search: AISearch;
 }
 
-
-
-
-
 @InputType()
 class MISearch {
-    @IsOptional()
+	@IsOptional()
 	@Field(() => MemberStatus, { nullable: true })
 	memberStatus?: MemberStatus;
 
-	 @IsOptional()
-	 @Field(() => MemberType, { nullable: true })
-	 memberType?: MemberType;
-
+	@IsOptional()
+	@Field(() => MemberType, { nullable: true })
+	memberType?: MemberType;
 
 	@IsOptional()
 	@Field(() => String, { nullable: true })
@@ -108,8 +103,8 @@ export class MembersInquiry {
 	@Field(() => Int)
 	limit: number;
 
-	@IsOptional() // bolishi,bolmasligi mmkin
-	@IsIn(avialableMemberSorts)
+	@IsOptional()
+	@IsIn(avialableMemberSorts) // TUZATILDI
 	@Field(() => String, { nullable: true })
 	sort?: string;
 
@@ -121,5 +116,3 @@ export class MembersInquiry {
 	@Field(() => MISearch)
 	search: MISearch;
 }
-
-
