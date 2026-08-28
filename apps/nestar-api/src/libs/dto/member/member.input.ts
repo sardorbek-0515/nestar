@@ -1,7 +1,7 @@
 import { Field, InputType, Int } from '@nestjs/graphql';
 import { IsIn, IsNotEmpty, IsOptional, Length, Min } from 'class-validator';
 import { MemberAuthType, MemberStatus, MemberType } from '../../enums/member.enum';
-import { avialableAgentSorts, avialableMemberSorts } from '../../config'; // TUZATILDI: avialable -> available
+import { availableAgentSorts, availableMemberSorts } from '../../config';
 import { Direction } from '../../enums/common.enum';
 
 @InputType()
@@ -34,22 +34,22 @@ export class LoginInput {
 	@IsNotEmpty()
 	@Length(3, 12)
 	@Field(() => String)
-	memberNick!: string;
+	memberNick: string;
 
 	@IsNotEmpty()
 	@Length(5, 12)
 	@Field(() => String)
-	memberPassword!: string;
+	memberPassword: string;
 }
 
 @InputType()
 class AISearch {
+	// doim optional
 	@IsOptional()
 	@Field(() => String, { nullable: true })
 	text?: string;
 }
 
-/** --------------------------- Peganation --------------------------- **/
 @InputType()
 export class AgentsInquiry {
 	@IsNotEmpty()
@@ -63,7 +63,7 @@ export class AgentsInquiry {
 	limit: number;
 
 	@IsOptional()
-	@IsIn(avialableAgentSorts) // TUZATILDI
+	@IsIn([availableAgentSorts])
 	@Field(() => String, { nullable: true })
 	sort?: string;
 
@@ -78,6 +78,8 @@ export class AgentsInquiry {
 
 @InputType()
 class MISearch {
+	// doim optional
+
 	@IsOptional()
 	@Field(() => MemberStatus, { nullable: true })
 	memberStatus?: MemberStatus;
@@ -104,7 +106,7 @@ export class MembersInquiry {
 	limit: number;
 
 	@IsOptional()
-	@IsIn(avialableMemberSorts) // TUZATILDI
+	@IsIn([availableMemberSorts])
 	@Field(() => String, { nullable: true })
 	sort?: string;
 

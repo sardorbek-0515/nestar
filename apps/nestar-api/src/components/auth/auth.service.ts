@@ -5,7 +5,6 @@ import { Member } from '../../libs/dto/member/member';
 import { T } from '../../libs/types/common';
 import { shapeIntoMongoObjectId } from '../../libs/config';
 
-
 @Injectable()
 export class AuthService {
 	constructor(private jwtService: JwtService) {}
@@ -36,5 +35,3 @@ export class AuthService {
 		return member;
 	}
 }
-
-
