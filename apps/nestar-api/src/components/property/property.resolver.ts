@@ -17,6 +17,8 @@ import { Property } from '../../libs/dto/property/property';
 export class PropertyResolver {
 	constructor(private readonly propertyService: PropertyService) {}
 
+
+
 	@Roles(MemberType.AGENT)
 	@UseGuards(RolesGuard)
 	@Mutation(() => Property)
@@ -28,6 +30,7 @@ export class PropertyResolver {
 		input.memberId = memberId;
 		return await this.propertyService.createProperty(input);
 	}
+
 	@UseGuards(WithoutGuard)
 	@Query((returns) => Property)
 	public async getProperty(
