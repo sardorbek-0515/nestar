@@ -18,7 +18,7 @@ export class PropertyService {
 		private memberService: MemberService,
 		private viewService: ViewService,
 	) {}
-
+    /**=========================== getProperty =============================== **/
 	public async createProperty(input: PropertyInput): Promise<Property> {
 		try {
 			const result = await this.propertyModel.create(input);
@@ -35,12 +35,6 @@ export class PropertyService {
 			throw new BadRequestException(Message.CREATE_FAILED);
 		}
 	}
-<<<<<<< HEAD
-
-=======
-     
-	/**=========================== getProperty ============================= **/
->>>>>>> 8d58ef4 (fix:)
 	public async getProperty(memberId: ObjectId, propertyId: ObjectId): Promise<Property> {
 		const search: T = {
 			_id: propertyId,
@@ -64,6 +58,10 @@ export class PropertyService {
 		targetProperty.memberData = await this.memberService.getMember(null, targetProperty.memberId);
 		return targetProperty;
 	}
+
+
+	/**=========================== propertyStatsEditor =============================== **/
+
 	public async propertyStatsEditor(input: StatisticModifier): Promise<Property> {
 		const { _id, targetKey, modifier } = input;
 		return await this.propertyModel.findByIdAndUpdate(_id, { $inc: { [targetKey]: modifier } }, { new: true }).exec();
