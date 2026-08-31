@@ -11,9 +11,14 @@ import { ViewService } from '../view/view.service';
 import { ViewInput } from '../../libs/dto/view/view.input';
 import { ViewGroup } from '../../libs/enums/view.enum';
 import { MemberUpdate } from '../../libs/dto/member/member.update';
+import { Properties } from '../../libs/dto/property/property';
+import { PropertyStatus } from '../../libs/enums/property.enum';
+import { lookupMember } from '../../libs/config';
+import { AgentPropertiesInquiry } from '../../libs/dto/property/property.input';
 
 @Injectable()
 export class MemberService {
+	[x: string]: any;
 	/** --------------------------- mongoose --------------------------- **/
 	constructor(
 		@InjectModel('Member') private readonly memberModel: Model<Member>,

@@ -171,5 +171,40 @@ export class PropertiesInquiry {
 	search: PiSearch;
 }
 
+/** ======================= APISearch ======================= **/
+@InputType()
+class APISearch {
+	@IsOptional()
+	@Field(() => PropertyStatus, { nullable: true })
+	propertyStatus?: PropertyStatus;
+}
+
+/** ======================= AgentPropertiesInquiry ======================= **/
+@InputType()
+export class AgentPropertiesInquiry {
+	@IsNotEmpty()
+	@Min(1)
+	@Field(() => Int)
+	page: number;
+
+	@IsNotEmpty()
+	@Min(1)
+	@Field(() => Int)
+	limit: number;
+
+	@IsOptional()
+	@IsIn(avialablePropertySorts)
+	@Field(() => String, { nullable: true })
+	sort?: string;
+
+	@IsOptional()
+	@Field(() => Direction, { nullable: true })
+	direction?: Direction;
+
+	@IsNotEmpty()
+	@Field(() => APISearch)
+	search: APISearch;
+}
+
 
 
