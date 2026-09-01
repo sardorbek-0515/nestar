@@ -2,6 +2,7 @@ import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { BoardArticleService } from './board-article.service';
 import { BoardArticle, BoardArticles } from '../../libs/dto/board-article/board-article';
 import {
+    AllBoardArticlesInquiry,
 	BoardArticleInput,
 	BoardArticlesInquiry,
 } from '../../libs/dto/board-article/board-article.input';
@@ -12,6 +13,9 @@ import { AuthGuard } from '../auth/guards/auth.guard';
 import { shapeIntoMongoObjectId } from '../../libs/config';
 import { WithoutGuard } from '../auth/guards/without.guard';
 import { BoardArticleUpdate } from '../../libs/dto/board-article/board-article.update';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { MemberType } from '../../libs/enums/member.enum';
+import { RolesGuard } from '../auth/guards/roles.guard';
 @Resolver()
 export class BoardArticleResolver {
 	constructor(private readonly boardArticleService: BoardArticleService) {}
@@ -55,7 +59,7 @@ export class BoardArticleResolver {
 
     /** --------------------------- getBoardArticles --------------------------- **/
 	@UseGuards(WithoutGuard)//auth guard bolmagan userlar ham kirishi mumkin
-	@Query(() => BoardArticles)//dto orqali articleni listini qaytaradi
+	@Query(() => BoardArticles)//
 	public async getBoardArticles(
 		@Args('input') input: BoardArticlesInquiry,
 		@AuthMember('_id') memberId: ObjectId,
@@ -63,4 +67,45 @@ export class BoardArticleResolver {
 		console.log('Query: getBoardArticles');
 		return await this.boardArticleService.getBoardArticles(memberId, input);
 	}
+
+    /** ADMIN */
+
+	/** ADMIN **/
+    
+
+    /** --------------------------- getAllBoardArticlesByAdmin --------------------------- **/
+	@Roles(MemberType.ADMIN)
+	@UseGuards(RolesGuard)
+	@Query(() => BoardArticles)
+	public async getAllBoardArticlesByAdmin(
+		@Args('input') input: AllBoardArticlesInquiry,
+	): Promise<BoardArticles> {
+		console.log('Query: getAllBoardArticlesByAdmin');
+		return await this.boardArticleService.getAllBoardArticlesByAdmin(input);
+	}
+    
+    /** --------------------------- updateBoardArticleByAdmin --------------------------- **/
+	@Roles(MemberType.ADMIN)
+	@UseGuards(RolesGuard)
+	@Mutation(() => BoardArticle)
+	public async updateBoardArticleByAdmin(
+		@Args('input') input: BoardArticleUpdate,
+	): Promise<BoardArticle> {
+		console.log('Mutation: updateBoardArticleByAdmin');
+		input._id = shapeIntoMongoObjectId(input._id);
+		return await this.boardArticleService.updateBoardArticleByAdmin(input);
+	}
+    
+    /** --------------------------- removeBoardArticleByAdmin --------------------------- **/
+	@Roles(MemberType.ADMIN)
+	@UseGuards(RolesGuard)
+	@Mutation(() => BoardArticle)
+	public async removeBoardArticleByAdmin(
+		@Args('articleId') input: string,
+	): Promise<BoardArticle> {
+		console.log('Mutation: removeBoardArticleByAdmin');
+		const articleId = shapeIntoMongoObjectId(input);
+		return await this.boardArticleService.removeBoardArticleByAdmin(articleId);
+	}
+
 }
