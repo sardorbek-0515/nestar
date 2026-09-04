@@ -13,6 +13,7 @@ import { shapeIntoMongoObjectId } from '../../libs/config';
 import { AgentPropertiesInquiry, AllPropertiesInquiry, PropertiesInquiry, PropertyInput } from '../../libs/dto/property/property.input';
 import { Properties, Property } from '../../libs/dto/property/property';
 import { PropertyUpdate } from '../../libs/dto/property/property.update';
+import { AuthGuard } from '../auth/guards/auth.guard';
 
 @Resolver()
 export class PropertyResolver {
@@ -71,7 +72,7 @@ export class PropertyResolver {
 		return await this.propertyService.getProperties(memberId, input);
 	}
 
-	/**=========================== getProperties ============================= **/
+	/**=========================== getProperties ===================== ======== **/
 	@Roles(MemberType.AGENT)
 	@UseGuards(RolesGuard)
 	@Query((returns) => Properties)
@@ -81,6 +82,18 @@ export class PropertyResolver {
 	): Promise<Properties> {
 		console.log('Quer: getAgentProperties');
 		return await this.propertyService.getAgentProperties(memberId, input);
+	}
+
+	/** +++++++++++++++++++++++ LIKE +++++++++++++++++++ **/
+	@UseGuards(AuthGuard)
+	@Mutation(() => Property)
+	public async likeTargetProperty(
+		@Args('propertyId') input: string,
+		@AuthMember('_id') memberId: ObjectId,
+	): Promise<Property> {
+		console.log('Mutation: likeTargetProperty ');
+		const likeRefId = shapeIntoMongoObjectId(input);
+		return await this.propertyService.likeTargetProperty(memberId, likeRefId);
 	}
 
 

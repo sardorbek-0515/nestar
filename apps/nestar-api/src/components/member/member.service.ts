@@ -15,6 +15,9 @@ import { Properties } from '../../libs/dto/property/property';
 import { PropertyStatus } from '../../libs/enums/property.enum';
 import { lookupMember } from '../../libs/config';
 import { AgentPropertiesInquiry } from '../../libs/dto/property/property.input';
+import { LikeGroup } from '../../libs/enums/like.enum';
+import { LikeInput } from '../../libs/dto/like/like.input';
+import { LikeService } from '../like/like.service';
 
 @Injectable()
 export class MemberService {
@@ -24,6 +27,7 @@ export class MemberService {
 		@InjectModel('Member') private readonly memberModel: Model<Member>,
 		private authService: AuthService,
 		private viewService: ViewService,
+		private likeService: LikeService,
 	) {}
 	/** --------------------------- signup --------------------------- **/
 	public async signup(input: MemberInput): Promise<Member> {
@@ -135,6 +139,28 @@ export class MemberService {
 		if (!result.length) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
 		return result[0];
 	}
+
+	/** --------------------------- LIKE --------------------------- **/
+	public async likeTargetMember(memberId: ObjectId, likeRefId: ObjectId): Promise<Member> {
+		const target: Member = await this.memberModel.findOne({ _id: likeRefId, memberStatus: MemberStatus.ACTIVE }).exec();
+
+		if (!target) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
+
+		const input: LikeInput = {
+			memberId: memberId,
+			likeRefId: likeRefId,
+			likeGroup: LikeGroup.MEMBER,
+		};
+
+		// LIKE TOGGLE via Like modules
+		const modifier: number = await this.likeService.toggleLike(input);
+		const result = await this.memberStatsEditor({ _id: likeRefId, targetKey: 'memberLikes', modifier: modifier });
+
+		if (!result) throw new InternalServerErrorException(Message.SOMETHING_WENT_WRONG);
+		return result;
+	}
+
+
 
 	/** --------------------------- getAllMembersByAdmin --------------------------- **/
 	public async getAllMembersByAdmin(input: MembersInquiry): Promise<Members> {
