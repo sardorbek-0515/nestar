@@ -1,12 +1,8 @@
-import {
-	BadRequestException,
-	Injectable,
-	InternalServerErrorException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, ObjectId, Schema } from 'mongoose';
 import {
-    AllBoardArticlesInquiry,
+	AllBoardArticlesInquiry,
 	BoardArticleInput,
 	BoardArticlesInquiry,
 } from '../../libs/dto/board-article/board-article.input';
@@ -20,8 +16,8 @@ import { BoardArticleUpdate } from '../../libs/dto/board-article/board-article.u
 import { lookupMember, shapeIntoMongoObjectId } from '../../libs/config';
 import { StatisticModifier, T } from '../../libs/types/common';
 import { LikeService } from '../like/like.service';
-import { LikeGroup } from '../../libs/enums/like.enum';
 import { LikeInput } from '../../libs/dto/like/like.input';
+import { LikeGroup } from '../../libs/enums/like.enum';
 
 @Injectable()
 export class BoardArticleService {
@@ -31,12 +27,9 @@ export class BoardArticleService {
 		private readonly viewService: ViewService,
 		private readonly likeService: LikeService,
 	) {}
-    
-    /** --------------------------- createBoardArticle --------------------------- **/
-	public async createBoardArticle(
-		memberId: ObjectId,
-		input: BoardArticleInput,
-	): Promise<BoardArticle> {
+
+	/** --------------------------- createBoardArticle --------------------------- **/
+	public async createBoardArticle(memberId: ObjectId, input: BoardArticleInput): Promise<BoardArticle> {
 		input.memberId = memberId;
 		try {
 			const result = await this.boardArticleModel.create(input);
@@ -52,23 +45,16 @@ export class BoardArticleService {
 			throw new BadRequestException(Message.CREATE_FAILED);
 		}
 	}
-    
-      /** --------------------------- getBoardArticle --------------------------- **/
-	public async getBoardArticle(
-		memberId: ObjectId,
-		articleId: ObjectId,
-	): Promise<BoardArticle> {
+
+	/** --------------------------- getBoardArticle --------------------------- **/
+	public async getBoardArticle(memberId: ObjectId, articleId: ObjectId): Promise<BoardArticle> {
 		const search: T = {
 			_id: articleId,
 			articleStatus: BoardArticleStatus.ACTIVE,
 		};
 
-		const targetBoardArticle: BoardArticle | null = await this.boardArticleModel
-			.findOne(search)
-			.lean()
-			.exec();
-		if (!targetBoardArticle)
-			throw new InternalServerErrorException(Message.NO_DATA_FOUND);
+		const targetBoardArticle: BoardArticle = await this.boardArticleModel.findOne(search).lean().exec();
+		if (!targetBoardArticle) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
 
 		if (memberId) {
 			const viewInput = {
@@ -85,32 +71,23 @@ export class BoardArticleService {
 				});
 				targetBoardArticle.articleViews++;
 			}
-			// meLiked
+			// meLiced
+			const likeInput = { memberId: memberId, likeRefId: articleId, likeGroup: LikeGroup.ARTICLE };
+			targetBoardArticle.meLiked = await this.likeService.checkLikeExistence(likeInput);
 		}
 
-		targetBoardArticle.memberData = await this.memberService.getMember(
-			null,
-			targetBoardArticle.memberId,
-		);
+		targetBoardArticle.memberData = await this.memberService.getMember(null, targetBoardArticle.memberId);
 		return targetBoardArticle;
 	}
-   
 
-    /** --------------------------- updateBoardArticle --------------------------- **/
-	public async updateBoardArticle(
-		memberId: ObjectId,
-		input: BoardArticleUpdate,
-	): Promise<BoardArticle> {
+	/** --------------------------- updateBoardArticle --------------------------- **/
+	public async updateBoardArticle(memberId: ObjectId, input: BoardArticleUpdate): Promise<BoardArticle> {
 		const { _id, articleStatus } = input;
 
 		const result = await this.boardArticleModel
-			.findOneAndUpdate(
-				{ _id: _id, memberId: memberId, articleStatus: BoardArticleStatus.ACTIVE },
-				input,
-				{
-					new: true,
-				},
-			)
+			.findOneAndUpdate({ _id: _id, memberId: memberId, articleStatus: BoardArticleStatus.ACTIVE }, input, {
+				new: true,
+			})
 			.exec();
 
 		if (!result) throw new InternalServerErrorException(Message.UPDATE_FAILED);
@@ -125,12 +102,9 @@ export class BoardArticleService {
 
 		return result;
 	}
-    
-    /** --------------------------- getBoardArticles --------------------------- **/
-	public async getBoardArticles(
-		memberId: ObjectId,
-		input: BoardArticlesInquiry,
-	): Promise<BoardArticles> {
+
+	/** --------------------------- getBoardArticles --------------------------- **/
+	public async getBoardArticles(memberId: ObjectId, input: BoardArticlesInquiry): Promise<BoardArticles> {
 		const { articleCategory, text } = input.search;
 		const match: T = { articleStatus: BoardArticleStatus.ACTIVE };
 		const sort: T = { [input?.sort ?? 'createdAt']: input?.direction ?? Direction.DESC };
@@ -165,37 +139,8 @@ export class BoardArticleService {
 		return result[0];
 	}
 
-	
-	/** --------------------------- LIKE --------------------------- **/
-	public async likeTargetBoardArticle(memberId: ObjectId, likeRefId: ObjectId): Promise<BoardArticle> {
-		const target: BoardArticle = await this.boardArticleModel
-			.findOne({ _id: likeRefId, articleStatus: BoardArticleStatus.ACTIVE })
-			.exec();
-
-		if (!target) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
-
-		const input: LikeInput = {
-			memberId: memberId,
-			likeRefId: likeRefId,
-			likeGroup: LikeGroup.ARTICLE,
-		};
-		// LIKE TOGGLE via Like modules
-		const modifier: number = await this.likeService.toggleLike(input);
-		const result = await this.boardArticleStatsEditor({
-			_id: likeRefId,
-			targetKey: 'articleLikes',
-			modifier: modifier,
-		});
-
-		if (!result) throw new InternalServerErrorException(Message.SOMETHING_WENT_WRONG);
-		return result;
-	}
-
-
-     /** --------------------------- getAllBoardArticlesByAdmin --------------------------- **/
-	public async getAllBoardArticlesByAdmin(
-		input: AllBoardArticlesInquiry,
-	): Promise<BoardArticles> {
+	/** --------------------------- getAllBoardArticlesByAdmin --------------------------- **/
+	public async getAllBoardArticlesByAdmin(input: AllBoardArticlesInquiry): Promise<BoardArticles> {
 		const { articleStatus, articleCategory } = input.search;
 		const match: T = {};
 		const sort: T = { [input?.sort ?? 'createdAt']: input?.direction ?? Direction.DESC };
@@ -224,11 +169,9 @@ export class BoardArticleService {
 
 		return result[0];
 	}
-     
-    /** --------------------------- updateBoardArticleByAdmin --------------------------- **/
-	public async updateBoardArticleByAdmin(
-		input: BoardArticleUpdate,
-	): Promise<BoardArticle> {
+
+	/** --------------------------- updateBoardArticleByAdmin --------------------------- **/
+	public async updateBoardArticleByAdmin(input: BoardArticleUpdate): Promise<BoardArticle> {
 		const { _id, articleStatus } = input;
 
 		const result = await this.boardArticleModel
@@ -249,7 +192,33 @@ export class BoardArticleService {
 		return result;
 	}
 
-    /** --------------------------- removeBoardArticleByAdmin --------------------------- **/   
+	/** --------------------------- LIKE --------------------------- **/
+	public async likeTargetBoardArticle(memberId: ObjectId, likeRefId: ObjectId): Promise<BoardArticle> {
+		const target: BoardArticle = await this.boardArticleModel
+			.findOne({ _id: likeRefId, articleStatus: BoardArticleStatus.ACTIVE })
+			.exec();
+
+		if (!target) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
+
+		const input: LikeInput = {
+			memberId: memberId,
+			likeRefId: likeRefId,
+			likeGroup: LikeGroup.ARTICLE,
+		};
+		// LIKE TOGGLE via Like modules
+		const modifier: number = await this.likeService.toggleLike(input);
+		const result = await this.boardArticleStatsEditor({
+			_id: likeRefId,
+			targetKey: 'articleLikes',
+			modifier: modifier,
+		});
+
+		if (!result) throw new InternalServerErrorException(Message.SOMETHING_WENT_WRONG);
+		return result;
+	}
+
+	/**++++++++++++++++++++ ADMIN +++++++++++++ **/
+	/** --------------------------- removeBoardArticleByAdmin --------------------------- **/
 	public async removeBoardArticleByAdmin(articleId: ObjectId): Promise<BoardArticle> {
 		const search: T = { _id: articleId, articleStatus: BoardArticleStatus.DELETE };
 
@@ -260,21 +229,11 @@ export class BoardArticleService {
 		return result;
 	}
 
-
-
-      /** --------------------------- boardArticleStatsEditor --------------------------- **/
-    public async boardArticleStatsEditor(
-		input: StatisticModifier,
-	): Promise<BoardArticle | null> {
+	/** --------------------------- boardArticleStatsEditor --------------------------- **/
+	public async boardArticleStatsEditor(input: StatisticModifier): Promise<BoardArticle> {
 		const { _id, targetKey, modifier } = input;
 		return await this.boardArticleModel
-			.findByIdAndUpdate(
-                _id, { $inc: { [targetKey]: modifier } },
-                 { new: true 
-
-                 },
-            )
+			.findByIdAndUpdate(_id, { $inc: { [targetKey]: modifier } }, { new: true })
 			.exec();
 	}
-
 }
