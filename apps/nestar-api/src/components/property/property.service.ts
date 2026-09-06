@@ -12,7 +12,7 @@ import { AgentPropertiesInquiry, AllPropertiesInquiry, PropertiesInquiry, Proper
 import { Properties, Property } from '../../libs/dto/property/property';
 import { PropertyUpdate } from '../../libs/dto/property/property.update';
 import moment = require('moment');
-import { lookupMember, shapeIntoMongoObjectId } from '../../libs/config';
+import { lookupAuthMemberLiked, lookupMember, shapeIntoMongoObjectId } from '../../libs/config';
 import { LikeService } from '../like/like.service';
 import { LikeGroup } from '../../libs/enums/like.enum';
 import { LikeInput } from '../../libs/dto/like/like.input';
@@ -27,7 +27,7 @@ export class PropertyService {
 		private viewService: ViewService,
 		private likeService: LikeService,
 	) {}
-    /**=========================== getProperty =============================== **/
+    /**=========================== createProperty =============================== **/
 	public async createProperty(input: PropertyInput): Promise<Property> {
 		try {
 			const result = await this.propertyModel.create(input);
@@ -44,6 +44,7 @@ export class PropertyService {
 			throw new BadRequestException(Message.CREATE_FAILED);
 		}
 	}
+	/**=========================== getProperty =============================== **/
 	public async getProperty(memberId: ObjectId, propertyId: ObjectId): Promise<Property> {
 		const search: T = {
 			_id: propertyId,
@@ -110,7 +111,7 @@ export class PropertyService {
 						list: [
 							{ $skip: (input.page - 1) * input.limit },
 							{ $limit: input.limit },
-							//meLiked
+						     lookupAuthMemberLiked(memberId,),
 							lookupMember,
 							{ $unwind: '$memberData' },
 						],
