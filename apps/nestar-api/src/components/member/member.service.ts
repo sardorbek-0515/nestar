@@ -6,25 +6,24 @@ import { AgentsInquiry, LoginInput, MemberInput, MembersInquiry } from '../../li
 import { MemberStatus, MemberType } from '../../libs/enums/member.enum';
 import { Direction, Message } from '../../libs/enums/common.enum';
 import { AuthService } from '../auth/auth.service';
-import {  StatisticModifier, T } from '../../libs/types/common';
+
+import { StatisticModifier, T } from '../../libs/types/common';
 import { ViewService } from '../view/view.service';
 import { ViewInput } from '../../libs/dto/view/view.input';
 import { ViewGroup } from '../../libs/enums/view.enum';
-import { MemberUpdate } from '../../libs/dto/member/member.update';
-import { Properties } from '../../libs/dto/property/property';
-import { PropertyStatus } from '../../libs/enums/property.enum';
-import { lookupMember } from '../../libs/config';
-import { AgentPropertiesInquiry } from '../../libs/dto/property/property.input';
-import { LikeGroup } from '../../libs/enums/like.enum';
 import { LikeInput } from '../../libs/dto/like/like.input';
+import { LikeGroup } from '../../libs/enums/like.enum';
 import { LikeService } from '../like/like.service';
+import { Follower, Following, MeFollowed } from '../../libs/dto/follow/follow';
+import { MemberUpdate } from '../../libs/dto/member/member.update';
 
 @Injectable()
 export class MemberService {
-	[x: string]: any;
 	/** --------------------------- mongoose --------------------------- **/
 	constructor(
 		@InjectModel('Member') private readonly memberModel: Model<Member>,
+		@InjectModel('Follow') private readonly followModel: Model<Follower | Following>,
+
 		private authService: AuthService,
 		private viewService: ViewService,
 		private likeService: LikeService,
@@ -41,7 +40,8 @@ export class MemberService {
 
 			return result;
 		} catch (err) {
-			console.log('Error, Service.model:', err);
+			// @ts-ignore
+			console.log('Error,Service.model:', err.message);
 			throw new BadRequestException(Message.USED_MEMBER_NICK_OR_PHONE);
 		}
 	}
@@ -108,13 +108,18 @@ export class MemberService {
 				targetMember.memberViews++;
 			}
 
-			// meLiced
+			// meLiked
 			const likeInput = { memberId: memberId, likeRefId: targetId, likeGroup: LikeGroup.MEMBER };
 			targetMember.meLiked = await this.likeService.checkLikeExistence(likeInput);
 
-		
 		}
 		return targetMember;
+	}
+
+	/** --------------------------- checkSubscription --------------------------- **/
+	private async checkSubscription(followerId: ObjectId, followingId: ObjectId): Promise<MeFollowed[]> {
+		const result = await this.followModel.findOne({ followingId: followingId, followerId: followerId }).exec();
+		return result ? [{ followerId: followerId, followingId: followingId, myFollowing: true }] : [];
 	}
 
 	/** --------------------------- getAgents --------------------------- **/
@@ -142,7 +147,6 @@ export class MemberService {
 		if (!result.length) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
 		return result[0];
 	}
-
 	/** --------------------------- LIKE --------------------------- **/
 	public async likeTargetMember(memberId: ObjectId, likeRefId: ObjectId): Promise<Member> {
 		const target: Member = await this.memberModel.findOne({ _id: likeRefId, memberStatus: MemberStatus.ACTIVE }).exec();
@@ -163,15 +167,14 @@ export class MemberService {
 		return result;
 	}
 
-
-
 	/** --------------------------- getAllMembersByAdmin --------------------------- **/
 	public async getAllMembersByAdmin(input: MembersInquiry): Promise<Members> {
 		const { memberStatus, memberType, text } = input.search;
 		const match: T = {};
 		const sort: T = { [input?.sort ?? 'createdAt']: input?.direction ?? Direction.DESC };
 
-		if (memberStatus) match.MemberStatus = memberStatus;
+		// if (memberStatus) match.MemberStatus = memberStatus;
+		if (memberStatus) match.memberStatus = memberStatus;
 		if (memberType) match.memberType = memberType;
 		if (text) match.memberNick = { $regex: new RegExp(text, 'i') };
 		console.log('match:', match);
@@ -200,7 +203,7 @@ export class MemberService {
 		return result;
 	}
 
-	/**=========================== propertyStatsEditor =============================== **/
+	/** --------------------------- memberStatsEditor --------------------------- **/
 	public async memberStatsEditor(input: StatisticModifier): Promise<Member> {
 		console.log('executed');
 		const { _id, targetKey, modifier } = input;

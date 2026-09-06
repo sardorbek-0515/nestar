@@ -1,122 +1,197 @@
-import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
-
+import { Mutation, Resolver, Query, Args } from '@nestjs/graphql';
+import { MemberService } from './member.service';
 import { UseGuards } from '@nestjs/common';
-import { BoardArticle, BoardArticles } from '../../libs/dto/board-article/board-article';
-import {
-	AllBoardArticlesInquiry,
-	BoardArticleInput,
-	BoardArticlesInquiry,
-} from '../../libs/dto/board-article/board-article.input';
+import { AgentsInquiry, LoginInput, MemberInput, MembersInquiry } from '../../libs/dto/member/member.input';
+import { Member, Members } from '../../libs/dto/member/member';
+import { AuthGuard } from '../auth/guards/auth.guard';
 import { AuthMember } from '../auth/decorators/authMember.decorator';
 import { ObjectId } from 'mongoose';
-import { AuthGuard } from '../auth/guards/auth.guard';
-import { WithoutGuard } from '../auth/guards/without.guard';
-import { shapeIntoMongoObjectId } from '../../libs/config';
-import { BoardArticleUpdate } from '../../libs/dto/board-article/board-article.update';
+import { Roles } from '../auth/decorators/roles.decorator';
 import { MemberType } from '../../libs/enums/member.enum';
 import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
-import { BoardArticleService } from '../board-article/board-article.service';
+
+import { getSerialForImage, shapeIntoMongoObjectId, validMimeTypes } from '../../libs/config';
+import { WithoutGuard } from '../auth/guards/without.guard';
+import { GraphQLUpload, FileUpload } from 'graphql-upload';
+import { createWriteStream } from 'fs';
+import { Message } from '../../libs/enums/common.enum';
+import { MemberUpdate } from '../../libs/dto/member/member.update';
 
 @Resolver()
-export class BoardArticleResolver {
-	constructor(private readonly boardArticleService: BoardArticleService) {}
+export class MemberResolver {
+	constructor(private readonly memberService: MemberService) {}
 
-	/** --------------------------- createBoardArticle --------------------------- **/
+	/** --------------------------- signup --------------------------- **/
+	@Mutation(() => Member) // @Mutation(POST)
+	public async signup(@Args('input') input: MemberInput): Promise<Member> {
+		console.log('Mutation: signup');
+		return await this.memberService.signup(input);
+	}
+
+	/** --------------------------- login --------------------------- **/
+	@Mutation(() => Member) // @Mutation(POST)
+	public async login(@Args('input') input: LoginInput): Promise<Member> {
+		console.log('Mutation: login');
+		return await this.memberService.login(input);
+	}
+
+	/** --------------------------- Authentication --------------------------- **/
+
+	// Authentication
+
 	@UseGuards(AuthGuard)
-	@Mutation(() => BoardArticle) //new articleni dto orqali yuboradi
-	public async createBoardArticle(
-		@Args('input') input: BoardArticleInput,
-		@AuthMember('_id') memberId: ObjectId,
-	): Promise<BoardArticle> {
-		console.log('Mutation: createBoardArticle');
-		return await this.boardArticleService.createBoardArticle(memberId, input);
+	@Query(() => String) // @Query(GET)
+	public async checkAuth(@AuthMember('memberNick') memberNick: string): Promise<string> {
+		console.log('Query: checkAuth');
+		console.log('memberNick:', memberNick);
+		console.log(memberNick);
+		return `Hi ${memberNick}`;
 	}
 
-	/** --------------------------- getBoardArticle --------------------------- **/
-	@UseGuards(WithoutGuard) //auth guard bolmagan userlar ham kirishi mumkin
-	@Query(() => BoardArticle) //dto orqali bitta articleni qaytaradi
-	public async getBoardArticle(
-		@Args('articleId') input: string, //mdb articleId ni string qilib qabul qiladi
-		@AuthMember('_id') memberId: ObjectId,
-	): Promise<BoardArticle> {
-		console.log('Query: getBoardArticle');
-		const articleId = shapeIntoMongoObjectId(input);
-		return await this.boardArticleService.getBoardArticle(memberId, articleId);
-	}
-
-	/** --------------------------- updateBoardArticle --------------------------- **/
+	@Roles(MemberType.USER, MemberType.AGENT)
 	@UseGuards(AuthGuard)
-	@Mutation(() => BoardArticle)
-	public async updateBoardArticle(
-		@Args('input') input: BoardArticleUpdate,
-		@AuthMember('_id') memberId: ObjectId,
-	): Promise<BoardArticle> {
-		console.log('Mutation: updateBoardArticle');
-		input._id = shapeIntoMongoObjectId(input._id);
-		return await this.boardArticleService.updateBoardArticle(memberId, input);
+	@Query(() => String) // @Mutation(POST)
+	public async checkAuthRoles(@AuthMember() authMember: Member): Promise<string> {
+		console.log('Query: checkAuthRoles');
+
+		return `Hi ${authMember.memberNick},you are ${authMember.memberType} (memerId: ${authMember._id})`;
 	}
 
-	/** --------------------------- getBoardArticles --------------------------- **/
-	@UseGuards(WithoutGuard) //auth guard bolmagan userlar ham kirishi mumkin
-	@Query(() => BoardArticles) //
-	public async getBoardArticles(
-		@Args('input') input: BoardArticlesInquiry,
+	@UseGuards(AuthGuard)
+	@Mutation(() => Member) // @Mutation(POST)
+	public async updateMember(
+		@Args('input') input: MemberUpdate,
 		@AuthMember('_id') memberId: ObjectId,
-	): Promise<BoardArticles> {
-		console.log('Query: getBoardArticles');
-		return await this.boardArticleService.getBoardArticles(memberId, input);
+	): Promise<Member> {
+		console.log('Mutation: updateMember');
+		delete input._id;
+
+		return await this.memberService.updateMember(memberId, input);
+	}
+
+	/** --------------------------- getMember --------------------------- **/
+	@UseGuards(WithoutGuard)
+	@Query(() => Member) // @Query (GET)
+	public async getMember(
+		@Args('memberId') input: string, //
+		@AuthMember('_id') memberId: ObjectId,
+	): Promise<Member> {
+		console.log('Query: getMember');
+
+		const targetId = shapeIntoMongoObjectId(input);
+		return await this.memberService.getMember(memberId, targetId);
+	}
+
+	/** --------------------------- getAgents --------------------------- **/
+	@UseGuards(WithoutGuard)
+	@Query(() => Members) // @Query (GET)
+	public async getAgents(
+		@Args('input') input: AgentsInquiry, //
+		@AuthMember('_id') memberId: ObjectId,
+	): Promise<Members> {
+		console.log('Query: getAgents');
+		return await this.memberService.getAgents(memberId, input);
 	}
 
 	/** +++++++++++++++++++++++ LIKE +++++++++++++++++++ **/
 	@UseGuards(AuthGuard)
-	@Mutation(() => BoardArticle)
-	public async likeTargetBoardArticle(
-		@Args('arlicleId') input: string,
+	@Mutation(() => Member)
+	public async likeTargetMember(
+		@Args('memberId') input: string,
 		@AuthMember('_id') memberId: ObjectId,
-	): Promise<BoardArticle> {
-		console.log('Mutation: likeTargetBoardArticle ');
+	): Promise<Member> {
+		console.log('Mutation: likeTargetMember ');
 		const likeRefId = shapeIntoMongoObjectId(input);
-		return await this.boardArticleService.likeTargetBoardArticle(memberId, likeRefId);
+		return await this.memberService.likeTargetMember(memberId, likeRefId);
 	}
 
-	/** <<<<<<<<<<<<<<<<<<<<<<<<< ADMIN >>>>>>>>>>>>>>>>> **/
-
-	/** --------------------------- getAllBoardArticlesByAdmin --------------------------- **/
+	/** --------------------------- getAllMembersByAdmin --------------------------- **/
+	/** ++++++++++++++++++++++++++++++ ADMIN ++++++++++++++++++++++++++++++ **/
+	// Authorization: ADMIN
 	@Roles(MemberType.ADMIN)
 	@UseGuards(RolesGuard)
-	@Query(() => BoardArticles)
-	public async getAllBoardArticlesByAdmin(
-		@Args('input') input: AllBoardArticlesInquiry,
-		@AuthMember('_id') memberId: ObjectId,
-	): Promise<BoardArticles> {
-		console.log('Query: getAllBoardArticlesByAdmin');
-		return await this.boardArticleService.getAllBoardArticlesByAdmin(input);
+	@Query(() => Members)
+	public async getAllMembersByAdmin(@Args('input') input: MembersInquiry): Promise<Members> {
+		console.log('Query: getAllMembersByAdmin');
+		return await this.memberService.getAllMembersByAdmin(input);
 	}
 
-	/** --------------------------- updateBoardArticleByAdmin --------------------------- **/
+	/** --------------------------- updateMemberByADmin --------------------------- **/
+	// Authorization: ADMIN
 	@Roles(MemberType.ADMIN)
 	@UseGuards(RolesGuard)
-	@Mutation(() => BoardArticle)
-	public async updateBoardArticleByAdmin(
-		@Args('input') input: BoardArticleUpdate,
-		@AuthMember('_id') memberId: ObjectId,
-	): Promise<BoardArticle> {
-		console.log('Mutation: updateBoardArticleByAdmin');
-		input._id = shapeIntoMongoObjectId(input._id);
-		return await this.boardArticleService.updateBoardArticleByAdmin(input);
+	@Mutation(() => Member) // @Mutation(POST)
+	public async updateMemberByADmin(@Args('input') input: MemberUpdate): Promise<Member> {
+		console.log('updateMemberByADmin: updateMemberByADmin');
+		return await this.memberService.updateMemberByADmin(input);
 	}
 
-	/** --------------------------- removeBoardArticleByAdmin --------------------------- **/
-	@Roles(MemberType.ADMIN)
-	@UseGuards(RolesGuard)
-	@Mutation(() => BoardArticle)
-	public async removeBoardArticleByAdmin(
-		@Args('articleId') input: string,
-		@AuthMember('_id') memberId: ObjectId,
-	): Promise<BoardArticle> {
-		console.log('Mutation: removeBoardArticleByAdmin');
-		const articleId = shapeIntoMongoObjectId(input);
-		return await this.boardArticleService.removeBoardArticleByAdmin(articleId);
+	/** ******************************** UPLOAD ***************************** **/
+	/** +++++++++++++++++++++++++ imageUploader +++++++++++++++++ **/
+	@UseGuards(AuthGuard)
+	@Mutation((returns) => String)
+	public async imageUploader(
+		@Args({ name: 'file', type: () => GraphQLUpload })
+		{ createReadStream, filename, mimetype }: FileUpload,
+		@Args('target') target: String,
+	): Promise<string> {
+		console.log('Mutation: imageUploader');
+
+		if (!filename) throw new Error(Message.UPLOAD_FAILED);
+		const validMime = validMimeTypes.includes(mimetype);
+		if (!validMime) throw new Error(Message.PROVIDE_ALLOWED_FORMAT);
+
+		const imageName = getSerialForImage(filename);
+		const url = `uploads/${target}/${imageName}`;
+		const stream = createReadStream();
+
+		const result = await new Promise((resolve, reject) => {
+			stream
+				.pipe(createWriteStream(url))
+				.on('finish', async () => resolve(true))
+				.on('error', () => reject(false));
+		});
+		if (!result) throw new Error(Message.UPLOAD_FAILED);
+
+		return url;
+	}
+	/** +++++++++++++++++++++++++ imagesUploader +++++++++++++++++ **/
+	@UseGuards(AuthGuard)
+	@Mutation((returns) => [String])
+	public async imagesUploader(
+		@Args('files', { type: () => [GraphQLUpload] })
+		files: Promise<FileUpload>[],
+		@Args('target') target: String,
+	): Promise<string[]> {
+		console.log('Mutation: imagesUploader');
+
+		const uploadedImages = [];
+		const promisedList = files.map(async (img: Promise<FileUpload>, index: number): Promise<Promise<void>> => {
+			try {
+				const { filename, mimetype, encoding, createReadStream } = await img;
+
+				const validMime = validMimeTypes.includes(mimetype);
+				if (!validMime) throw new Error(Message.PROVIDE_ALLOWED_FORMAT);
+
+				const imageName = getSerialForImage(filename);
+				const url = `uploads/${target}/${imageName}`;
+				const stream = createReadStream();
+
+				const result = await new Promise((resolve, reject) => {
+					stream
+						.pipe(createWriteStream(url))
+						.on('finish', () => resolve(true))
+						.on('error', () => reject(false));
+				});
+				if (!result) throw new Error(Message.UPLOAD_FAILED);
+
+				uploadedImages[index] = url;
+			} catch (err) {
+				console.log('Error, file missing!');
+			}
+		});
+
+		await Promise.all(promisedList);
+		return uploadedImages;
 	}
 }
