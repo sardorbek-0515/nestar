@@ -8,7 +8,7 @@ import { PropertyStatus } from '../../libs/enums/property.enum';
 import { ViewGroup } from '../../libs/enums/view.enum';
 import { ViewService } from '../view/view.service';
 import { StatisticModifier, T } from '../../libs/types/common';
-import { AgentPropertiesInquiry, AllPropertiesInquiry, PropertiesInquiry, PropertyInput } from '../../libs/dto/property/property.input';
+import { AgentPropertiesInquiry, AllPropertiesInquiry, OrdinaryInquiry, PropertiesInquiry, PropertyInput } from '../../libs/dto/property/property.input';
 import { Properties, Property } from '../../libs/dto/property/property';
 import { PropertyUpdate } from '../../libs/dto/property/property.update';
 import moment = require('moment');
@@ -27,6 +27,7 @@ export class PropertyService {
 		private viewService: ViewService,
 		private likeService: LikeService,
 	) {}
+
     /**=========================== createProperty =============================== **/
 	public async createProperty(input: PropertyInput): Promise<Property> {
 		try {
@@ -159,7 +160,16 @@ export class PropertyService {
 			});
 	}
 
-  	/**=========================== getAgentProperties =============================== **/
+    
+	/**=========================== getFavorites =============================== **/
+	public async getFavorites(memberId: ObjectId, input: OrdinaryInquiry): Promise<Properties> {
+		return await this.likeService.getFavoriteProperties(memberId, input);
+
+
+
+	}
+
+ /**=========================== getAgentProperties =============================== **/
 	public async getAgentProperties(memberId: ObjectId, input: AgentPropertiesInquiry): Promise<Properties> {
 		const { propertyStatus } = input.search;
 		if (propertyStatus === PropertyStatus.DELETE) throw new BadRequestException(Message.NOT_ALLOWED_REQUEST);

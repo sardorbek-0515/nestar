@@ -64,12 +64,12 @@ export const lookupAuthMemberLiked = (memberId: T, targetRefId: string = '$_id')
 		},
 	};
 };
-
-
+/**=========================== LookupAuthMemberFollowed =============================== **/
 interface LookupAuthMemberFollowed {
 	followerId: T,
 	followingId: string;
 }
+
 export const lookupAuthMemberFollowed = (input: LookupAuthMemberFollowed) => {
 	const { followerId, followingId } = input;
 	return {
@@ -105,6 +105,8 @@ export const lookupAuthMemberFollowed = (input: LookupAuthMemberFollowed) => {
 	};
 };
 
+
+/**=========================== lookupMember =============================== **/
 export const lookupMember = {
 	$lookup: {
 		from: 'members',
@@ -129,5 +131,24 @@ export const lookupFollowerData = {
 		localField: 'followerId',
 		foreignField: '_id',
 		as: 'followerData',
+	},
+};
+
+// lookupFavorite
+export const lookupFavorite = {
+	$lookup: {
+		from: 'members',
+		localField: 'favoriteProperty.memberId',
+		foreignField: '_id',
+		as: 'favoriteProperty.memberData',
+	},
+};
+
+export const lookupVisit = {
+	$lookup: {
+		from: 'members',
+		localField: 'visitedProperty.memberId',
+		foreignField: '_id',
+		as: 'visitedProperty.memberData',
 	},
 };
