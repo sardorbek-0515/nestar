@@ -14,6 +14,7 @@ import { lookupFavorite } from '../../libs/config';
 export class LikeService {
 	constructor(@InjectModel('Like') private readonly likeModel: Model<Like>) {}
 
+	 /**=========================== toggleLike =============================== **/
 	public async toggleLike(input: LikeInput): Promise<number> {
 		const search: T = { memberId: input.memberId, likeRefId: input.likeRefId },
 			exist = await this.likeModel.findOne(search).exec();
@@ -34,7 +35,7 @@ export class LikeService {
 		console.log(`-Like modifier ${modifier}-`);
 		return modifier;
 	}
-
+ /**=========================== checkLikeExistence =============================== **/
     public async checkLikeExistence(input: LikeInput): Promise<MeLiked[]> {
 		const { memberId, likeRefId } = input;
 		const result = await this.likeModel.findOne({ memberId: memberId, likeRefId: likeRefId }).exec();
@@ -42,6 +43,10 @@ export class LikeService {
 		return result ? [{ memberId: memberId, likeRefId: likeRefId, myFavorite: true }] : [];
 	}
 
+
+
+
+	 /**=========================== getFavoriteProperties =============================== **/
 public async getFavoriteProperties(memberId: ObjectId, input: OrdinaryInquiry): Promise<Properties> {
 	const { page, limit } = input;
 	const match: T = { likeGroup: LikeGroup.PROPERTY, memberId: memberId };

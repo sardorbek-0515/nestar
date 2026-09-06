@@ -97,8 +97,16 @@ export class PropertyResolver {
 	}
 
 
-
-
+   /**=========================== getVisited ===================== ======== **/
+    @UseGuards(AuthGuard)
+	@Query((returns) => Properties) //biz tomosha qilgan propertylarni olish
+	public async getVisited(
+		@Args('input') input: OrdinaryInquiry,
+		@AuthMember('_id') memberId: Types.ObjectId,
+	): Promise<Properties> {
+		console.log('Query: getVisited');
+		return await this.propertyService.getVisited(memberId, input);
+	}
 
 
 
