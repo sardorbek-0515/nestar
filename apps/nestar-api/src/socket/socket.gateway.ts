@@ -2,12 +2,13 @@ import { Logger } from '@nestjs/common';
 import { OnGatewayInit, SubscribeMessage, WebSocketGateway } from '@nestjs/websockets';
 import { Server } from 'ws';
 
+/** +++++++++++++++++++++++++++++ WebSocketGateway +++++++++++++++++++++++ **/
 @WebSocketGateway({transports: ["websocket"], secure: false})
 export class SocketGateway  implements OnGatewayInit{
  private logger: Logger = new Logger('SocketEventsGetway')
  private summaryClient: number = 0;
 
-  public afterInit(server: Server){
+  public afterInit(server: Server){ 
     this.logger.log(`WebSocket Server Initialized total: ${this.summaryClient}`); 
  
   }
