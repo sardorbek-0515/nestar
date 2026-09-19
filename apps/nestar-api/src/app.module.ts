@@ -18,6 +18,7 @@ import { SocketModule } from './socket/socket.module';
 			playground: true,
 			uploads: false,
 			autoSchemaFile: true,
+			installSubscriptionHandlers: true,
 			formatError: (error: T) => {
 				console.log('error:', error);
 				const graphQLFormattedError = {

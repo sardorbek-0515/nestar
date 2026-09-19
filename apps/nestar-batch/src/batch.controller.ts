@@ -29,7 +29,7 @@ export class BatchController {
 
   /** --------------------------- batchTopProperties --------------------------- **/
   @Cron('20 00 01 * * *', {name: BATCH_TOP_PROPERTIES})
-  public async batchTopProperties() {
+  public async batchTopProperties() {// ya'ni eng top propertylarni hisoblab
     try{
       this.logger['context'] = BATCH_TOP_PROPERTIES
       this.logger.debug('EXECUTED!');
