@@ -86,37 +86,42 @@ export class CommentService {
 	}
 
     /** --------------------------- getComments --------------------------- **/
-	public async getComments(
-		memberId: ObjectId,
-		input: CommentsInquiry,
-	): Promise<Comments> {
-		const { commentRefId } = input.search;
-		const match: T = { commentRefId: commentRefId, commentStatus: CommentStatus.ACTIVE };
-		const sort: T = { [input?.sort ?? 'createdAt']: input?.direction ?? Direction.DESC };
+public async getComments(
+	memberId: ObjectId,
+	input: CommentsInquiry,
+): Promise<Comments> {
+	const { commentRefId } = input.search;
+	const match: T = { commentRefId: commentRefId, commentStatus: CommentStatus.ACTIVE };
+	const sort: T = { [input?.sort ?? 'createdAt']: input?.direction ?? Direction.DESC };
 
-		const result: Comments[] = await this.commentModel
-			.aggregate([
-				{ $match: match },
-				{ $sort: sort },
-				{
-					$facet: {
-						list: [
-							{ $skip: (input.page - 1) * input.limit },
-							{ $limit: input.limit },
-							// meLiked
-							lookupMember,
-							{ $unwind: '$memberData' },
-						],
-						metaCounter: [{ $count: 'total' }],
-					},
+	// // VAQTINCHALIK TEKSHIRUV (keyin o'chirasiz)
+	// const raw = await this.commentModel.find({ commentRefId: commentRefId }).lean();
+	// console.log('RAW COMMENT:', raw);
+	// console.log('memberId type:', typeof raw[0]?.memberId, raw[0]?.memberId);
+	// console.log('memberId class:', raw[0]?.memberId?.constructor?.name);
+
+	const result: Comments[] = await this.commentModel
+		.aggregate([
+			{ $match: match },
+			{ $sort: sort },
+			{
+				$facet: {
+					list: [
+						{ $skip: (input.page - 1) * input.limit },
+						{ $limit: input.limit },
+						// meLiked
+						lookupMember,
+						{ $unwind: '$memberData' },
+					],
+					metaCounter: [{ $count: 'total' }],
 				},
-			])
-			.exec();
-		if (!result.length) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
+			},
+		])
+		.exec();
+	if (!result.length) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
 
-		return result[0];
-	}
-
+	return result[0];
+}
     
     /** ADMIN */
 
