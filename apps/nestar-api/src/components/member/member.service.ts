@@ -207,7 +207,7 @@ export class MemberService {
 	}
 
 	/** --------------------------- updateMemberByADmin --------------------------- **/
-	public async updateMemberByADmin(input: MemberUpdate): Promise<Member> {
+	public async updateMemberByAdmin(input: MemberUpdate): Promise<Member> {
 		const result: Member = await this.memberModel.findOneAndUpdate({ _id: input._id }, input, { new: true }).exec();
 		if (!result) throw new InternalServerErrorException(Message.UPDATE_FAILED);
 		return result;
